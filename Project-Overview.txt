@@ -1,0 +1,1734 @@
+Project Overview
+The Invoicing App is a lightweight web-based application designed for small businesses and startups
+to create, manage, and print invoices with ease. The app simplifies the invoicing workflow by
+combining company setup, item catalog management, invoice creation, and reporting dashboards
+in one simple solution.
+Technology & Tools Summary
+• Frontend: Next.js 15 (app-router), TypeScript, react-hook-form, zod, use cookies, and use json-server for db,
+styled with HTML, CSS, and Material UI (MUI).
+• Hosting: Azure App Service for the web app, SQL Azure for the database, and Blob Storage for
+files.
+Provide a fast and user-friendly way to generate professional invoices.• 
+• Ensure data isolation per company through a multi-tenant architecture.
+• Maintain accuracy by enforcing validation and server-side recalculations.
+Deliver insights through visual dashboards and charts.• • Enable professional output with a printable invoice layout using the company’s branding.
+Core Features
+1. Signup & Login– Secure onboarding with company profile and user account creation.
+2. Item Master– Central catalog to manage products and services with pricing and discounts.
+3. nvoice Management– Create, edit, and track invoices with auto-calculated totals.
+4. Dashboard– KPI cards, bar chart, and pie chart for quick insights.
+5. Print & Export– Generate professional, print-ready invoices with company logo and currency
+symbol.
+Key Benefits
+Simple: Easy to set up, no complex configurations.• Accurate: Totals, taxes, and discounts are calculated automatically.• Branded: Uses company logo and currency symbol for professional touch.• Insightful: Quick stats and charts for better financial tracking.• Secure: Password encryption and company-specific data isolation.• Clear here to check Figma Design
+Pages
+Page Short Description
+Signup Register company and first user with profile details.
+
+Login Item Master – List Item Master – Editor Invoice – List Invoice – Editor Invoice – Print Secure login with email and password.
+Manage product and service catalog with pricing.
+Create or update item details with rate, discount, and picture.
+View, search, and manage all invoices created. Mini Dashboard on
+top.
+Create or modify invoice with customer info and items.
+Generate PDF/print-friendly invoice layout.
+
+Signup
+06 September 2025 01:13 PM
+1. Overview
+The Signup page is the entry point for new companies to register on the invoicing app. It captures both company profile details and the first user’s credentials in a single
+step, ensuring that each account is tied to a company. The process is simple and secure, guiding users through required fields like company name, address, and currency
+symbol, while also allowing them to upload a company logo for branding.
+Once completed, the system creates the company record and the primary user, securely stores the password in encrypted form, and logs the user in automatically. This page
+sets the foundation for personalized invoicing by applying the company’s branding and currency preferences across the app.
+Perfect Let’s draft Section 2. Page UI/UX Requirements – Signup Page in a short but complete way.
+2. Page UI/UX Requirements
+Page Route: /signup
+Layout & Design
+• Header:
+○ Title: Create Your Account
+○ Subtitle: “Set up your company and start invoicing in minutes.”
+• Form Sections: Group fields under User Information and Company Information.
+• Actions:
+○ Primary button: Sign Up (full width on mobile).
+○ Secondary link: Already have an account? Login.
+• Validation Style:
+○ Inline error messages in red below the field.
+○ Fields
+Required fields marked with *
+. Mobile: Form scrollable, buttons sticky at bottom.• Field Display Caption Type / Control Validation Rules Messages / Notes
+First Name* First Name Textbox (max 50) Required, trim spaces “Please enter your first name.”
+Last Name* Last Name Textbox (max 50) Required, trim spaces “Please enter your last name.”
+Email* Email Address Textbox (email) Required, unique, must be valid email format “Enter a valid email address.” / “Email already exists.”
+Password* Password Password field (max 20) Required, min 8 chars, must include letters +
+numbers. Strength meter shown.
+“Password must be at least 8 characters long.”
+Company Name* Company Name Textbox (max 100) Required Company Logo Company Logo File upload (PNG/JPG) Optional, max size 2–5 MB “Please enter your company name.”
+Show thumbnail preview. Reject invalid size/type.
+Address* Company Address Multiline textbox (500) Required, trim spaces “Please enter company address.”
+City* City Textbox (max 50) Required “Please enter city.”
+Zip* Zip Code Numeric textbox (6) Required, exactly 6 digits “Zip must be exactly 6 digits.”
+Industry Industry Textbox (max 50) Optional—
+Currency Symbol* Currency Symbol Textbox (max 5) Required, max 5 chars (e.g., $, ₹, €, AED) “Enter a valid currency symbol.”
+Design Instructions
+Form Layout: Two sections (User Info, Company Info).• Responsive: Single column on mobile, two columns (side-by-side) on desktop.• Password Field: Show/Hide toggle + strength bar.• Logo Upload: Button + thumbnail preview.• • Primary Action: Blue filled button → Sign Up.
+• Secondary Link: Under form → “Already have an account? Login”.
+• Success Flow: On valid submission → auto login → redirect to Dashboard.
+
+3. Activity & Data Flow Diagram – Signup
+Flow Description
+The Signup process covers form submission → server validation → database persistence → auto login → redirect to dashboard.
+Step-by-Step Activity Flow
+1. User Action
+○ User opens /signup.
+○ Enters required details: User info + Company info.
+○ Uploads logo (optional).
+○ Clicks Sign Up.
+2. Client-Side Validation
+○ All required fields filled.
+○ Email format check.
+○ Password strength check.
+○ Zip = 6 digits.
+○ Currency Symbol ≤ 5 chars.
+○ Logo file type/size check.
+○ Show inline error messages if invalid.
+3. 4. API Call
+○ Request: POST /api/auth/signup.
+○ Payload (JSON): User + Company info.
+○ Password sent as plain (within HTTPS).
+Server-Side Processing
+○ Trim all text fields.
+○ Validate required fields.
+○ Check Email uniqueness.
+○ If duplicate → return error: “Email already exists.”
+
+5. 6. ○ Hash password (salted).
+○ Insert into Company table.
+○ Insert into User table (with FK → CompanyID).
+○ Store logo in Azure Blob, save blob path in Company table.
+Response
+○ On success → issue JWT token (with UserID + CompanyID).
+○ Return success message + redirect path /dashboard.
+UI Feedback
+○ ○ Success → auto redirect to dashboard.
+Error → show inline error (e.g., “Email already exists”, “Invalid logo file”).
+Data Flow
+Step Source Action Destination
+Form Input Browser User enters Signup details Client form
+Validation Browser JS checks required fields, format rules Client form
+API Request Browser JSON with form data via POST Web API
+Validation Web API Validate input, check email uniqueness DB + API logic
+File Upload Web API Save logo image Azure Blob
+Data Persistence Web API Insert company & user SQL Server
+Token Response Web API Generate JWT with CompanyID + UserID Browser
+Redirect Browser Store token, navigate to /dashboard UI
+4. Database Table & Stored Procedures
+4.1 Tables
+Table: Company
+Field Name Data Type Rules / Notes
+CompanyID int (PK, identity) Primary key
+CompanyName nvarchar(100) Required
+Address nvarchar(500) Nullable
+City nvarchar(50) Nullable
+Zip nvarchar(6) Nullable
+Industry nvarchar(50) Nullable
+CurrencySymbol nvarchar(5) Required
+CreatedOn datetime2 Default SYSUTCDATETIME()
+CreatedBy int Nullable
+UpdatedOn datetime2 Auto-set on update
+UpdatedBy int Nullable
+Table: [User]
+Use square brackets as User is a reserved word.
+Field Name Data Type Rules / Notes
+UserID int (PK, identity) Primary key
+CompanyID int (FK → Company.CompanyID) Required
+FirstName nvarchar(50) Required
+LastName nvarchar(50) Nullable
+Email nvarchar(100) Required, unique (global)
+PasswordHash nvarchar(100) Required (hashed)
+CreatedOn datetime2 Default SYSUTCDATETIME()
+CreatedBy int Nullable
+UpdatedOn datetime2 Auto-set on update
+UpdatedBy int Nullable
+Indexes & Constraints
+• UK_User_Email: unique on (Email).
+• FK: FK_User_Company(CompanyID).
+4.2 Stored Procedures (Specs Only)
+Stored Procedure : UserSignupInsertUpdate
+Purpose: Create company + first user in one transaction.
+Parameters
+Name Type Notes
+@FirstName nvarchar(50) Required
+@LastName nvarchar(50) Nullable
+@Email nvarchar(100) Required
+@Password nvarchar(20) Required, plain text password
+@CompanyName nvarchar(100) Required
+
+@Address nvarchar(500) Nullable
+@City nvarchar(50) Nullable
+@Zip char(6) Nullable
+@Industry nvarchar(50) Nullable
+@CurrencySymbol nvarchar(5) Required
+@CompanyID int OUTPUT Return value
+@UserID int OUTPUT Return value
+Return Type
+Output parameters + result set.• Result Set (on success)
+Field Type Notes
+CompanyID int New company id
+UserID int New user id
+Email nvarchar(256) Echo
+CurrencySymbol nvarchar(5) Echo
+Key Logic
+1. Start transaction; SET XACT_ABORT ON.
+2. Validate input lengths and formats.
+3. Check Email not exists.
+4. Insert Company.
+5. Insert User with CompanyID.
+6. Set outputs; commit.
+Optimization Suggestions
+Keep only needed columns in result.• Add covering index on User(Email) (unique).• • Use TRY…CATCH to rollback on error.
+• Enforce trims and upper/lower normalize for Email compare.
+Let API pass PasswordHash (preferred) to keep hashing out of SQL.• Stored Procedure : UserEmailCheckExists
+Purpose: Check if email already exists.
+Parameters
+Name Type Notes
+@Email nvarchar(100) Required
+Return Type
+• Single value: bit
+“1” if exists, else “0”.
+Optimization Suggestions
+• Use SELECT CAST(CASE WHEN EXISTS(...) THEN 1 ELSE 0 END AS bit).
+• Leverage UQ_User_Email index.
+5. API Endpoint Design — Signup
+Page Route: /signup
+API Base: /api/auth
+5.1 Endpoint: Create account (Company + First User)
+Method: POST
+URL: /api/auth/signup
+Auth: None (public)
+Content-Type: multipart/form-data
+Form Fields
+Name Type Rules
+firstName string(50) required
+lastName string(50) optional
+email string(100) required, valid, unique
+password string(20) required, min 8, letters+digits
+companyName string(100) required
+address string(500) optional
+city string(50) optional
+zip string(6) optional, 0–9 only, length 6 if sent
+industry string(50) optional
+currencySymbol string(5) required
+logo file (PNG/JPG) optional, ≤ 5 MB
+Server Steps (summary)
+1. 2. 3. 4. 5. Trim all fields.
+Validate input.
+Check email via UserEmailCheckExists.
+If logo sent → upload to Azure Blob → get LogoBlobUrl.
+Call SP UserSignupInsertUpdate (per your spec).
+○ Pass plain @Password (SP will handle hash logic).
+6. On success → issue JWT (UserID, CompanyID).
+Request (multipart example)
+POST /api/auth/signup
+Content-Type: multipart/form-data
+firstName=Ali
+lastName=Khan
+email=ali@example.com
+password=P4ssword9
+companyName=Alit Tech
+address=Indore MP
+city=Indore
+zip=452001
+industry=IT
+currencySymbol=₹
+logo=(file)
+Response 200 (JSON)
+{
+"companyID": 101,
+"userID": 501,
+"email": "ali@example.com",
+"currencySymbol": "₹",
+"token": "<jwt>",
+"redirect": "/dashboard"
+}
+Errors
+Code When Body (example)
+400 Bad input {"error":"Zip must be 6 digits."}
+409 Email exists {"error":"Email already exists."}
+415 Bad file type {"error":"Logo must be PNG or JPG."}
+413 File too large {"error":"Logo size exceeds limit."}
+500 Server/db error {"error":"Could not sign up. Try again."}
+Notes
+Return JWT on success; client stores it.• Numbers use thousand sep only in UI, never in API.• All dates as ISO strings (not used here).• Duplicate company names allowed (as per your rule).• 5.2 Endpoint: Check email (helper)
+Method: GET
+URL: /api/auth/check-email?email={email}
+Auth: None
+Response 200
+{ "exists": true }
+Errors: 400 invalid email.
+5.3 Azure Blob upload (internal step)
+API saves logo to: blob://companies/{companyID}/CompanyLogo/CompanyLogo.png• Generate and saves a thumbnail image too: blob://companies/{companyID}/CompanyLogo/CompanyLogoThumbnail.png• Got it
+Here’s the clean Section 5. API Endpoint Design – Signup Page with your specified endpoints.
+5. API Endpoint Design – Signup Page
+Page Route: /signup
+Endpoint 1 – Signup
+• Method: POST
+Route: /account/signup/post• Auth: None (unauthenticated)• Purpose: Register a new company and its first user.• Request Body (JSON)
+{
+"firstName": "Haider",
+"lastName": "Ali",
+"email": "haider@example.com",
+"password": "P@ssword123",
+"companyName": "Alit Technologies",
+"address": "123 Main Street",
+"city": "Indore",
+"zip": "452001",
+"industry": "IT Services",
+"currencySymbol": "₹",
+"logoFile": "(binary upload)"
+}
+Success Response
+{
+"token": "<jwt-token>",
+"user": {
+"userID": 1,
+"firstName": "Haider",
+"lastName": "Ali",
+"email": "haider@example.com"
+},
+"company": {
+"companyID": 1,
+"companyName": "Alit Technologies",
+"currencySymbol": "₹"
+}
+}
+Errors
+400– Invalid input.• 409– Email already exists.• 415– Invalid logo type or size.• Endpoint 2 – Check Email Exists
+• Method: POST
+Route: /account/signup/checkEmailExists• Auth: None (unauthenticated)• Purpose: Check if a given email is already registered.• Request Body (JSON)
+{
+"email": "haider@example.com"
+}
+{
+Success Response
+"exists": true
+}
+Errors
+• 400– Invalid email format.
+6. QA & Test Cases – Signup Page
+6.1 UI Validation (Form)
+ID Case Input Expect
+UI-01 All good All req fields set; logo none Inline no errors; enable Sign Up
+UI-02 Trim text Fields with spaces Save trimmed values
+UI-03 First name miss FirstName empty Show “Please enter your first name.”
+UI-04 Last name max 50 chars Accept
+UI-05 Email bad abc@ Show “Enter a valid email address.”
+UI-06 Email dup (UI) Known email Show “Email already exists.” after check
+UI-07 Pass weak 6 chars only Show rule hint; block submit
+UI-08 Pass ok 8–20, letters+nums Accept; strength bar ok
+UI-09 Company name miss Empty Show “Please enter your company name.”
+UI-10 Address opt Empty Accept (nullable)
+UI-11 City opt Empty Accept (nullable)
+UI-12 Zip opt Empty Accept (nullable)
+UI-13 Zip bad len 5 or >6 Show “Zip must be exactly 6 digits.”
+UI-14 Zip ok 6 digits Accept
+UI-15 Currency miss Empty Show “Currency symbol is required.”
+UI-16 Currency max 5 chars Accept
+UI-17 Logo type bad GIF/BMP Show “Invalid logo file.”
+UI-18 Logo big >5 MB Show “Invalid logo file.”
+UI-19 Mobile view Narrow screen One column; buttons stick bottom
+UI-20 Inline errors Any bad field Red help text under field
+6.2 API – Check Email
+ID Case Req Expect
+CE-01 New email {email:new@x.com} 200 {exists:false}
+CE-02 Used email {email:used@x.com} 200 {exists:true}
+CE-03 Bad email {email:bad@} 400
+6.3 API – Signup
+ID Case Req Expect
+SG-01 Happy path no logo Valid body 200 with JWT; userID, companyID set
+SG-02 Happy path with logo Valid + PNG 200; blob and thumb created; JWT
+SG-03 Email dup Email in use 409 "Email already exists."
+SG-04 Weak pass <8 chars 400 with pass rule msg
+SG-05 Long pass >20 chars 400
+SG-06 Currency long >5 chars 400
+SG-07 Zip bad len 5 or >6 400
+SG-08 Logo bad type GIF 415
+SG-09 Logo big >5 MB 415
+SG-10 Trim on save Spaces in text Saved trimmed
+SG-11 Nullables ok Address/City/Zip null 200; saved as nulls
+SG-12 Duplicate company Same name 200; allowed
+6.4 Security & Token
+ID Case Action Expect
+SEC-01 No auth on signup POST /account/signup/post Allowed (no auth)
+SEC-02 No auth on check POST /account/signup/checkEmailExists Allowed (no auth)
+SEC-03 JWT fields Read token payload Has userID, companyID
+SEC-04 No ids in body Try pass userID/companyID Ignored; server uses token only
+SEC-05 HTTPS only Call over http Blocked by env/proxy (as set)
+SEC-06 Rate limit Burst signups Last calls 429 (if set)
+6.5 Data & Blob
+ID Case Check Expect
+DB-01 Rows made After signup One Company, one User
+DB-02 Email unique Add same email Block at DB/API
+DB-03 Timestamps CreatedOn set Uses SYSUTCDATETIME()
+DB-04 Audit CreatedBy null OK for signup
+DB-05 No logo url in DB Inspect tables No blob url fields
+BL-01 Logo path After upload Blob at /company/{companyID}/CompanyLogo/CompanyLogo.png
+BL-02 Thumb path After upload Blob at /company/{companyID}/CompanyLogo/CompanyLogo_thumb.png
+BL-03 Logo API GET /api/company/logo 200 {url}
+BL-04 Thumb API GET /api/company/logoThumbnail 200 {url}
+BL-05 Not set No logo uploaded 404 on logo APIs
+6.6 Concurrency & Edge
+ID Case Setup Expect
+CN-01 Race on email 2 signups same email One 200, one 409
+CN-02 Slow blob Blob delay Signup 200; logo APIs may 404 until done (or queue)
+CN-03 Large text Max lens Save ok; no trunc
+CN-04 Emoji curr sym e.g., ₹ Save and show fine
+6.7 Post-Signup UX
+ID Case Action Expect
+UX-01 Auto login After 200 UX-02 Error show Any 4xx/5xx App stores JWT; route to /dashboard
+Show short error text on form
+UX-03 Retry Fix field then submit Works; no dup rows
+
+Login
+06 September 2025 01:53 PM
+1. Overview – Login
+The Login page lets a user enter Email and Password to access the app. It is simple and fast. Add a
+Remember me checkbox to keep the user signed in on that device. No Forgot password flow in
+MVP.
+On submit, the server checks the email and password, creates a JWT, and returns it to the app. The
+app stores the token (session or long-lived if Remember me is on) and opens the dashboard. All later
+API calls read userID and companyID from this token only. Rate limits and clear error text protect
+the flow.
+2. Page UI/UX Requirements – Login
+Page Route: /login
+Layout & Design
+• Header
+○ ○ Title: Welcome Back
+Subtitle: “Log in to your account.”
+• Form
+○ ○ One card. Centered on page.
+Single column on all screens.
+• Actions
+○ ○ Primary: Login
+Text link: Create account → /signup
+• Errors
+• ○ Inline red text under the field.
+○ Page alert on auth fail.
+Remember Me
+○ Checkbox under password.
+○ If on, store JWT longer.
+Fields
+Field Caption Control Validation Rules Messages / Notes
+Email* Email Address Textbox (email) Required. Valid email. Trim spaces.
+“Enter a valid email.”
+Password* Password field
+Required. 8–20 chars. Letters + digits. “Enter your password.”
+
+Remember
+Checkbox Optional. “Keep me signed me in.”
+Button States
+• Disabled until both fields valid.
+Show spinner on submit.• Form Hints
+• Press Enter to submit.
+Show/Hide icon on password.• Validation Flow
+1. User fills fields.
+2. Client checks email and password rules.
+3. On Login, call API.
+4. If auth fails, show: “Email or password is wrong.”
+Success Flow
+• Save JWT.
+○ If Remember me: long-lived storage.
+○ Else: session storage.
+• Redirect to /dashboard.
+Style Notes
+• Clean MUI look.
+• Card with soft shadow.
+Ample space between fields.• Large, clear labels.• Mobile friendly tap size.• A11y
+Label every input.• • Tab order correct.
+• ARIA for error text.
+
+3. Activity & Data Flow Diagram – Login
+Flow Description
+The login process validates user credentials, issues a JWT token with embedded userID and
+companyID, and redirects to the dashboard. The “Remember me” option controls token persistence.
+Step-by-Step Activity Flow
+1. User Action
+○ User opens /login.
+○ Enters Email and Password.
+○ Selects Remember me (optional).
+○ Clicks Login.
+2. Client-Side Validation
+○ Email not empty, valid format.
+○ Password not empty, length 8–20.
+○ If invalid → inline error text.
+3. 4. API Call
+○ Request: POST /account/login/post.
+○ Payload JSON: { email, password, rememberMe }.
+Server-Side Processing
+○ Trim values.
+○ Check email exists.
+○ Validate password against stored hash.
+○ If fail → return 401 Unauthorized.
+○ If success → issue JWT with:
+Claims: { userID, companyID }
+Expiry:
+□ Short (e.g., 2h–8h) if rememberMe = false.
+□ Longer (e.g., 7d–30d) if rememberMe = true.
+5. 6. Response
+○ Success: { token, user: {userID, firstName, email}, company: {companyID,
+companyName, currencySymbol} }.
+○ Failure: { error: "Email or password is wrong." }.
+Client Handling
+○ On success:
+ Store token in sessionStorage (short) or localStorage (long) based on Remember
+Me.
+ Redirect → /dashboard.
+○ On error:
+Show red banner under password field with error text.
+Data Flow
+Step Source Action Destination
+Input Browser User types Email, Password, RememberMe Login form
+
+Validation Browser Check field rules Client form
+API Request Browser POST JSON to /account/login/post Web API
+Validation Web API Verify email, hash compare password DB
+Token Issue Web API Create JWT with userID, companyID Token Storage Browser Save in session/local storage Redirect Browser Load /dashboard UI
+Response
+Client app
+4. Database Table & Stored Procedures – Login
+4.1 Involved Tables (reference)
+• User (UserID PK, CompanyID FK, FirstName, LastName nullable, Email nvarchar(100) unique,
+PasswordHash nvarchar(100), audit fields)
+• Company (CompanyID PK, CompanyName, CurrencySymbol, address fields nullable, audit
+fields)
+Indexes
+UK_User_Email (Email) – unique, case-insensitive collation recommended for equality checks.• 4.2 Stored Procedures (Specs Only)
+Stored Procedure : UserLogin
+Purpose: Validate credentials and return minimal profile for JWT creation.
+Parameters
+Name Type Notes
+@Email nvarchar(100) Required
+@PasswordHash nvarchar(100) Required (hash computed in API)
+Return Type
+Result set (single row on success; zero rows on failure)• Result Set (on success)
+Field Type Notes
+UserID int
+CompanyID int
+FirstName nvarchar(50)
+LastName nvarchar(50) Nullable
+Email nvarchar(100) Echo
+CompanyName nvarchar(100) Join from Company
+CurrencySymbol nvarchar(5) Join from Company
+Key Logic (summary)
+1. Normalize inputs: LTRIM(RTRIM(@Email)).
+2. Match exact on Email AND PasswordHash.
+3. Join Company by CompanyID and project minimal fields.
+4. If no match → return no rows (API maps to 401).
+Optimization Suggestions
+Ensure UK_User_Email exists (seeks by Email).• 
+• Store emails in consistent case; compare using case-insensitive collation.
+Keep projection minimal to reduce payload.• 
+• Consider add filtered index IX_User_Email_PwHash (Email, PasswordHash) if needed.
+5. API Endpoint Design – Login
+Page Route: /login
+Endpoint – Login
+• Method: POST
+Route: /auth/post• • Auth: None
+• Goal: Check user, make JWT, honor rememberMe.
+Request (JSON)
+{
+"email": "haider@example.com",
+"password": "P@ssword123",
+"rememberMe": true
+}
+Rules
+• Trim all fields.
+• Email must be valid.
+• Password 8–20 chars.
+• Do not pass userID or companyID.
+Server Steps
+
+Server Steps
+1. Hash the password.
+2. Call UserLogin(@Email, @PasswordHash).
+3. If match, make JWT with userID and companyID.
+4. Set JWT exp:
+○ rememberMe = true → long (e.g., 7–30 days).
+○ rememberMe = false → short (e.g., 2–8 hours).
+Success (200)
+{
+"token": "<jwt-token>",
+"user": {
+"userID": 1,
+"firstName": "Haider",
+"lastName": "Ali",
+"email": "haider@example.com"
+},
+"company": {
+"companyID": 1,
+"companyName": "Alit Technologies",
+"currencySymbol": "₹"
+}
+}
+Errors
+400– Bad input.• 401– Email or password is wrong.• 429– Too many tries (if rate limit).• • 500– Server error.
+Headers
+Request: Content-Type: application/json• Response: Authorization not used; token in body.• Client Store
+• If rememberMe → save token in localStorage.
+• Else → save in sessionStorage.
+Notes
+All later APIs read IDs from token only.• No ids in any request body or URL.• No hyphens in route names.• 6. QA & Test Cases – Login
+Page: /login
+API: /account/login/post
+6.1 UI checks
+ID Case Input Expect
+UI-01 Happy path Valid email + pass Button active; no red text
+UI-02 Trim text Spaces in email Trim before send
+UI-03 Bad email a@ Show “Enter a valid email.”
+UI-04 Empty pass Blank Show “Enter your password.”
+UI-05 Short pass 6 chars Show rule hint; block
+UI-06 Long pass >20 chars Show rule hint; block
+UI-07 Show/Hide Toggle icon Mask on/off works
+UI-08 Enter key Press Enter Form submits
+UI-09 Remember me on Checked Token kept long
+UI-10 Remember me off Unchecked Token in session
+UI-11 Error banner Wrong creds Show “Email or password is wrong.”
+UI-12 Mobile view Narrow screen Card fits; tap size ok
+6.2 API checks – /account/login/post
+ID Case Body Expect
+API-01 Good login Valid email+pass 200 with token, user, company
+API-02 Bad pass Right email, bad pass 401 with error text
+API-03 No user Email not in app 401 with error text
+API-04 Bad email fmt a@ 400
+API-05 Short pass 6 chars 400
+API-06 Long pass >20 400
+API-07 Remember on rememberMe:true Token exp = long
+API-08 Remember off rememberMe:false Token exp = short
+API-09 Rate limit Many tries fast 429 (if set)
+API-10 Trim input Spaces in email Login ok if hash match
+6.3 Token & store
+ID Case Step Expect
+TK-01 Make JWT On success Claims have userID, companyID
+TK-02 Store long remember on Save in localStorage
+TK-03 Store short remember off Save in sessionStorage
+TK-04 No ids in req Send ids in body Server ignores; uses token only
+TK-05 Expire short Wait past exp Next call fails 401
+6.4 Sec & edge
+ID Case Step Expect
+SEC-01 HTTPS only Call over http Block by env/proxy
+SEC-02 SQL match Email + hash Exact match only
+SEC-03 Case in email MIXED case Match by CI compare
+SEC-04 Trim save Lead/trail spaces Trim before check
+SEC-05 Error text Wrong creds No leak of which field
+SEC-06 Brute force Many fails Lock/slow as per rate rule
+6.5 Redirect
+ID Case Step Expect
+RD-01 After 200 Save token Go to /dashboard
+RD-02 After 401 Show error Stay on /login
+If this is fine, say “approved”. Then I will start Item Master – Section 1. Overview.
+
+Items List
+06 September 2025 01:59 PM
+1. Overview – Item Master (List Page)
+The Item Master List page is where users can manage all products and services offered by the
+company. It provides a searchable and paginated grid view of items with key details such as item
+name, sale rate, and discount. From this page, users can add new items, edit existing ones, or delete
+items that are no longer needed.
+The design emphasizes quick lookup and efficient management with filters, search, and export
+options. It forms the base for invoice creation, since items defined here will be selectable in the
+Invoice page. This page ensures a centralized and accurate catalog for consistent invoicing.
+2. Page UI/UX Requirements – Item Master List Page
+Page Route: /items
+Layout & Design
+• Header
+○ Title: Items
+○ Subtitle: “Manage your product and service catalog.”
+• Action Bar
+○ Left: Search box (by Item Name, Description).
+○ Right: Buttons → Add New Item, Export, Column Chooser.
+Grid/List View• ○ Columns:
+1. Item Picture (thumbnail, optional).
+2. Item Name (bold, required).
+3. Description (truncate to one line, tooltip on hover).
+4. Sale Rate (right aligned, numeric with 2 decimals).
+5. Discount % (right aligned, numeric with 2 decimals).
+6. Actions (Edit, Delete icons).
+• Footer
+○ Pager + rows-per-page selector.
+Fields Displayed
+Field Caption Type / Control Display Rules
+ItemPicture Picture Thumbnail (50x50) Show blank/placeholder if none.
+ItemName* Item Name Text (max 50) Bold in grid. Required.
+Description Description Text (max 500) Show first ~50 chars with tooltip for full text.
+SaleRate* Sale Rate Numeric (12,2) Show with thousand sep + 2 decimals. Required.
+DiscountPct Discount % Numeric (5,2) Show with 2 decimals, append “%”. Default 0.
+Buttons / Actions
+Add New Item → open Item Editor popup.• Edit → open editor with selected item.• • Delete → confirmation before hard delete.
+Export → download visible data as CSV/Excel.• Column Chooser → show/hide columns.• Validations
+Item Name: required, unique within company.• • Sale Rate: must be ≥ 0.
+Discount %: 0–100 range.• UX Notes
+Search is client-side on loaded grid (or server-side if many items).• Grid sortable on all columns except picture.• Mobile → stack grid into cards (Item Name top, Picture left, Rate & Discount right).• • Actions always visible (don’t hide behind a menu).
+3. Activity & Data Flow Diagram – Item Master List
+Page
+Flow Description
+The Item Master List page is used to view, search, add, edit, and delete items. It connects the UI
+grid with the backend APIs and database. The flow ensures company -specific data isolation, client-
+side search/filtering, and server-side validation before saving changes.
+Step-by-Step Activity Flow
+1. Page Load
+○ User navigates to /items.
+○ Browser sends GET /item/getlist.
+○ API resolves companyID from token.
+○ DB returns items for that company.
+○ UI shows grid with data.
+2. Search / Filter
+○ User types in search box.
+○ Client filters current list (if dataset small) OR triggers API call /item/search with keyword.
+○ Grid updates instantly.
+3. Add New Item
+○ User clicks Add New Item.
+○ Opens Item Editor popup.
+○ On Save → call POST /item/insert.
+○ API validates → DB insert → return new ItemID.
+○ UI refreshes grid with new row.
+4. Edit Item
+○ User clicks Edit on a row.
+○ Opens Item Editor pre-filled.
+○ On Save → call POST /item/update.
+○ API validates → DB update → return success.
+○ UI updates row inline.
+5. Delete Item
+○ User clicks Delete on a row.
+○ Confirmation popup → Yes.
+○ Call POST /item/delete.
+○ API deletes record (hard delete).
+UI removes row from grid.
+6. ○ Export
+○ User clicks Export.
+○ Client calls /item/export → server returns CSV/Excel.
+○ File download triggered.
+7. Column Chooser
+○ User toggles visibility of grid columns.
+○ Affects UI only; no server call.
+Data Flow
+Step Source Action Destination
+Page Load Browser GET /item/getlist Web API
+API Auth Web API Read companyID from token SQL DB
+DB Query SQL DB Fetch item rows Web API
+Response Web API Send JSON list Browser
+Search Browser Filter list / GET /item/search Web API (optional)
+Add Item Browser POST /item/insert Web API → SQL DB
+Edit Item Browser POST /item/update Delete Item Browser POST /item/delete Web API → SQL DB
+Web API → SQL DB
+Export Browser GET /item/export Web API → Download file
+4. Database Table & Stored Procedures – Item Master
+4.1 Table
+Table: Item
+Field Name Data Type Rules / Notes
+CompanyID int Required; FK → Company.CompanyID (data isolation)
+ItemID int (PK, identity) Primary key
+ItemName nvarchar(50) Required; Unique within (CompanyID, ItemName)
+Description nvarchar(500) Nullable
+SaleRate decimal(12,2) Required; default 0; ≥ 0
+DiscountPct decimal(5,2) Required; default 0; range 0–100
+CreatedOn datetime2 Default SYSUTCDATETIME()
+CreatedBy int Nullable
+UpdatedOn datetime2 Concurrency; set on each insert/update
+UpdatedBy int Nullable
+Indexes & Constraints
+UX_Item_Company_ItemName UNIQUE (CompanyID, ItemName).• • Check: SaleRate >= 0, DiscountPct between 0 and 100.
+Blob Note (pictures)
+• Do not store blob URLs in DB. Item images live in Azure Blob (computed path), e.g.
+/company/{CompanyID}/Item/{ItemID}/ItemPicture.png and a thumbnail alongside.
+4.2 Stored Procedures (Specs Only)
+Stored Procedure : ItemInsertUpdate
+Purpose: Insert or update an Item using the same ID parameter. No dataset returned.
+Parameters
+Name Type Notes
+@CompanyID int Required; enforce isolation
+@ItemID int OUTPUT Input: 0 or NULL = insert; >0 = update. Output: new/existing
+
+@ItemID int OUTPUT Input: 0 or NULL = insert; >0 = update. Output: new/existing
+ID
+@ItemName nvarchar(50) Required
+@Description nvarchar(500) Nullable
+@SaleRate decimal(12,2) Required; ≥ 0
+@DiscountPct decimal(5,2) Required; 0–100
+@UpdatedOnPre
+datetime2 For update only; pass NULL on insert
+v
+@UpdatedOn datetime2
+OUTPUT
+Output: new UpdatedOn assigned by SP
+Return Type
+No result set. Only OUTPUT params populated. Raise error on failure.• Key Logic
+1. SET XACT_ABORT ON; BEGIN TRAN;
+2. If insert (@ItemID IS NULL OR @ItemID = 0):
+○ Validate lengths/ranges.
+○ Enforce (CompanyID, ItemName) uniqueness.
+○ Insert row with CreatedOn = SYSUTCDATETIME(), UpdatedOn = SYSUTCDATETIME().
+○ Set @ItemID = SCOPE_IDENTITY(); set @UpdatedOn to new value.
+3. If update (@ItemID > 0):
+○ Validate inputs.
+○ Check row exists for this CompanyID + ItemID.
+○ Concurrency check: existing UpdatedOn must equal @UpdatedOnPrev; else THROW
+50001, 'Concurrency conflict. Please reload.', 1;
+○ Enforce unique (CompanyID, ItemName) excluding this ItemID.
+○ Update fields; set UpdatedOn = SYSUTCDATETIME().
+○ Set @UpdatedOn to new value.
+4. COMMIT;
+Optimization Suggestions
+• Covering unique index on (CompanyID, ItemName INCLUDE (ItemID)).
+• Keep UpdatedOn in-memory before commit to avoid re-select.
+• Use TRY/CATCH to rollback and re-throw clear app-level errors.
+Stored Procedure : ItemGetList
+Purpose: Return items for the company. Search & pagination are UI-only; backend may optionally
+filter by a single ItemID to refresh one row.
+Parameters
+Name Type Notes
+@CompanyID int Required
+@ItemID int Nullable; when provided, return that single item only
+Return Type
+Result Set
+Result set (columns below)• Column Notes
+ItemID
+ItemName
+Description
+SaleRate
+DiscountPct
+UpdatedOn For concurrency on client
+Optimization Suggestions
+• Index seek by (CompanyID) and optionally (CompanyID, ItemID).
+Keep projection minimal for grid.• Stored Procedure : ItemGetLookupList
+Purpose: Lightweight list for dropdowns/selects.
+Parameters
+Name Type Notes
+@CompanyID int Required
+Return Type
+Result Set
+Result set (small payload)• Column
+ItemID
+ItemName
+Optimization Suggestions
+Narrow projection, NO large text fields.• Cache on API layer if needed (per-company).• Stored Procedure : ItemDelete
+Purpose: Hard delete an item.
+Parameters
+Name Type Notes
+@CompanyID int Required
+@ItemID int Required
+Return Type
+• No result set. Raise error if not found.
+Key Logic
+• Verify row exists for (CompanyID, ItemID).
+• Delete. (If later invoices reference item, keep invoices safe because they store description/rate
+at time of invoice.)
+Optimization Suggestions
+• FK constraints only if you later add dependent tables; else app-level checks.
+5. API Endpoint Design – Item Master
+Page Route: /items
+All APIs are JWT. Read userID and companyID from token only.
+1) Get List
+• Method: GET
+Route: /item/getlist• • Auth: JWT
+Query: itemID (optional; when set, return one row)• • Resp:
+[
+{ "itemID": 1, "itemName": "Service A", "description": "Desc", "saleRate": 1200.00, "discountPct":
+5.00, "updatedOn": "2025-09-06T12:00:00Z" }
+]
+Notes: No search or paging here. UI handles that.• 2) Get Lookup List
+• Method: GET
+Route: /item/getlookuplist• • Auth: JWT
+• Resp:
+[
+{ "itemID": 1, "itemName": "Service A", "saleRate": 1200.00, "discountPct": 5.00 }
+]
+{
+3) Insert/Update
+• Method: POST
+Route: /item/insertupdate• • Auth: JWT
+• Body:
+"itemID": 0,
+"itemName": "Service A",
+"description": "Desc",
+"saleRate": 1200.00,
+"discountPct": 5.00,
+"updatedOnPrev": null
+}
+• Rules:
+○ ○ itemID = 0 or null → insert.
+itemID > 0 → update (must pass updatedOnPrev).
+• Resp:
+{
+"itemID": 1,
+"updatedOn": "2025-09-06T12:34:56Z"
+}
+• Errors:
+○ ○ ○ 409 on name clash in same company.
+412 on concurrency (updatedOn mismatch).
+400 on bad data.
+4) Delete
+• Method: POST
+Route: /item/delete• • Auth: JWT
+• Body:
+{ "itemID": 1 }
+Resp: 200 { "ok": true }• • Note: Hard delete.
+5) Item Picture URL (optional, if using images)
+• Method: GET
+Route: /item/picture• • Auth: JWT
+• Query: itemID
+• Resp:
+{ "url": "/company/{companyID}/Item/{itemID}/ItemPicture.png" }
+6) Item Picture Thumbnail URL (optional)
+• Method: GET
+Route: /item/pictureThumbnail• • Auth: JWT
+• Query: itemID
+• Resp:
+{ "url": "/company/{companyID}/Item/{itemID}/ItemPicture_thumb.png" }
+Validation (server)
+itemName required, max 50, unique per company.• • saleRate ≥ 0.
+• discountPct 0–100.
+• Trim text.
+Round money to 2 dec.• Notes
+• • • All dates UTC.
+No ids in query except itemID where shown.
+No hyphens in routes.• Uses SPs: ItemInsertUpdate, ItemGetList, ItemGetLookupList, ItemDelete.
+6. QA & Test Cases – Item Master List Page
+Page: /items
+APIs: /item/getlist, /item/getlookuplist, /item/insertupdate, /item/delete, /item/picture,
+/item/pictureThumbnail
+6.1 UI & Grid
+ID Case Input / Action Expect
+UI-01 Load page Open /items Grid loads with item list
+UI-02 Empty list No items in DB Grid shows “No items found”
+UI-03 Search Type “Pro” Grid filters ItemName/Description
+UI-04 Column sort Click Sale Rate header Grid sorted ascending/descending
+UI-05 Add button Click Add New Item Editor popup opens
+UI-06 Edit button Click pencil on row Editor popup pre-filled
+UI-07 Delete button Click trash on row Confirmation popup shown
+UI-08 Delete confirm Confirm delete Row removed from grid
+UI-09 Delete cancel Cancel popup No change in grid
+UI-10 Export Click Export File download triggered
+UI-11 Column chooser Hide Description Grid updates with column hidden
+UI-12 Tooltip Hover Description Full text visible
+UI-13 Picture missing Item with no image Placeholder shown
+UI-14 Pager Click next page Grid updates to next set
+UI-15 Mobile layout Small screen Rows switch to card format
+6.2 API – Get List (/item/getlist)
+ID Case Params Expect
+GL-01 All items none List of all company items
+GL-02 Single item itemID=5 One row only
+GL-03 Other company Token mismatch Returns only token’s company items
+GL-04 No token— 401 Unauthorized
+6.3 API – Get Lookup List (/item/getlookuplist)
+ID Case Params Expect
+LK-01 Valid companyID via token List of {itemID, itemName, saleRate, discountPct}
+LK-02 Other company Token mismatch Empty list
+LK-03 No token— 401 Unauthorized
+6.4 API – Insert/Update (/item/insertupdate)
+ID Case Body Expect
+IU-01 Insert good itemID=0, valid fields 200 { itemID, updatedOn }
+IU-02 Insert dup name Same ItemName in company 409 Conflict
+IU-03 Update good itemID=5, updatedOnPrev match 200 { itemID, updatedOn }
+IU-04 Update wrong company Item not owned by company 404
+IU-05 Update conflict updatedOnPrev mismatch 412 Precondition Failed
+IU-06 SaleRate <0 -10 400 Bad Request
+IU-07 Discount >100 150 400 Bad Request
+IU-08 Text too long >50 in name 400 Bad Request
+IU-09 Nullables Description null Accept
+6.5 API – Delete (/item/delete)
+ID Case Body Expect
+DL-01 Delete good {itemID:5} 200 {ok:true}
+DL-02 Delete other company Wrong token 404
+DL-03 Delete not exist {itemID:999} 404
+DL-04 No token— 401 Unauthorized
+6.6 API – Picture & Thumbnail
+ID Case Input Expect
+PIC-01 Valid pic GET /item/picture?itemID=5 200 {url}
+PIC-02 Valid thumb GET /item/pictureThumbnail?itemID=5 200 {url}
+PIC-03 Missing No pic uploaded 404
+PIC-04 Other company Wrong token 404
+PIC-05 No token— 401 Unauthorized
+6.7 Security & Concurrency
+ID Case Action Expect
+SEC-01 Token only Try pass companyID in body Ignored, use token
+SEC-02 SQL inj Bad strings in fields Clean; error if too long
+SEC-03 Concurrency Two users edit same item Second fails 412
+SEC-04 Timezone UpdatedOn returned UTC Consistent across calls
+
+Item Editor
+06 September 2025 02:22 PM
+1. Overview – Item Master (Editor Page)
+The Item Editor lets users add or edit a single item. It shows fields for name, note, rate, and discount, plus a picture upload. It uses clean rules and clear hints. On
+save, the app calls one API that does insert or update based on the itemID. It returns the new itemID and updatedOn for UI sync.
+The editor keeps things fast and safe. It checks field limits, blocks bad values, and uses updatedOn for lock checks. After save, the list can refresh one row only
+(using itemID). Pictures are stored in blob, not in the DB.
+2. Page UI/UX Requirements – Item Master Editor Page
+Page Route: /items/editor (popup/modal over list)
+Layout & Design
+• Header
+○ Caption: New Item (when itemID = 0) or Edit Item (when itemID > 0).
+○ Right: Close (×) button.
+Form Fields (single column on mobile, two columns on desktop)• Field Caption Control Validation Rules Messages / Notes
+ItemPicture Item Picture File upload (PNG/JPG, ≤5MB), preview thumbnail Optional Placeholder shown if missing.
+ItemName* Item Name Textbox (max 50) Required, unique within
+company
+“Please enter item name.” / “Name
+already exists.”
+Description Description Multiline textbox (max 500) Optional Show count (e.g., 0/500).
+SaleRate* Sale Rate Numeric input (12,2), right-aligned Required, ≥0 “Enter a valid rate.”
+DiscountPct Discount % Numeric input (5,2), right-aligned Optional, 0–100 Default 0. Show “%” suffix.
+• Footer
+○ ○ Left: Cancel (link style).
+Right: Save (primary button, blue).
+UX Notes
+• Modes:
+• • • • ○ New Item → blank fields.
+○ Edit Item → pre-fill values + picture preview.
+Validation:
+○ Inline red messages under fields.
+○ Trim text values.
+Concurrency:
+○ API uses updatedOnPrev check; if mismatch, show error: “Item updated by another user, please reload.”
+Save Flow:
+○ Call /item/insertupdate.
+○ On success: close modal, refresh grid row by itemID.
+Picture Upload:
+○ Stored in blob /company/{companyID}/Item/{itemID}/ItemPicture.png.
+○ Auto-generate thumbnail /ItemPicture_thumb.png.
+○ Editor shows thumbnail preview after upload.
+
+3. Activity & Data Flow Diagram – Item Master Editor Page
+Flow Description
+The Item Editor popup handles create and edit actions for items. It connects user input → validation → API call → DB stored procedure → response → grid refresh.
+Step-by-Step Activity Flow
+1. Open Editor
+○ ○ User clicks Add New Item → editor opens with empty fields.
+User clicks Edit on grid row → editor opens pre-filled with item data (from /item/getlist?itemID=x).
+2. User Input
+○ User fills/edits fields: ItemName, Description, SaleRate, Discount%, and uploads Picture (optional).
+3. Client-Side Validation
+○ ItemName required, ≤50 chars.
+○ SaleRate ≥0.
+○ Discount% between 0–100.
+○ Picture PNG/JPG ≤5MB.
+○ Inline error messages shown under fields.
+4. Save Click
+○ API call: POST /item/insertupdate.
+○ Request includes:
+itemID (0 = new, >0 = update).
+
+All fields.
+updatedOnPrev (null for new, value for update).
+5. Server-Side Processing
+○ API trims/validates fields.
+○ Checks uniqueness of (CompanyID, ItemName).
+○ Calls SP ItemInsertUpdate.
+○ For update → validates updatedOnPrev for concurrency.
+○ Saves Item.
+○ Saves picture (if any) to Blob:
+/company/{companyID}/Item/{itemID}/ItemPicture.png
+
+Creates thumbnail /ItemPicture_thumb.png.
+6. Response
+○ On success: { itemID, updatedOn }.
+○ On duplicate: 409 Conflict.
+○ On concurrency mismatch: 412 Precondition Failed.
+○ On bad input: 400.
+UI Handling
+○ Success: close modal → refresh or insert one row in grid using itemID.
+○ Concurrency error: show popup → “Item updated by another user, please reload.”
+○ Validation error: inline error messages remain visible.
+Data Flow
+Step Source Action Destination
+Open editor Browser Request item details (/item/getlist?itemID=x) if editing Web API → DB
+Input Browser User fills/edits fields Client form
+Save click Browser POST /item/insertupdate JSON Web API
+API Web API Validate, call ItemInsertUpdate SQL DB
+Picture Web API Save uploaded file Azure Blob
+Result SQL DB Return itemID, updatedOn Web API
+Response Web API Return JSON success/error Browser
+UI refresh Browser Update grid row by itemID Item List Page
+4. Database table & Stored Procedures – Item Editor
+Check Item List page
+5. API Endpoint Design – Item Editor
+Check Item List page
+6. QA & Test Cases – Item Master Editor
+Page: /items/editor (modal)
+APIs: /item/getlist, /item/insertupdate, /item/picture/upload, /item/picture, /item/pictureThumbnail
+6.1 UI & Form
+ID Case Action / Input Expect
+UI-01 Open new Click Add New Item Modal title New Item
+UI-02 Open edit Click Edit on row Modal title Edit Item, fields filled
+UI-03 Close Click × or Cancel Modal closes, no save
+UI-04 Save enabled Valid req fields Save enabled
+UI-05 Name miss Empty name Red text “Please enter item name.”
+UI-06 Name max 51 chars Block, show limit
+UI-07 Rate neg -1 Block, “Enter a valid rate.”
+UI-08 Rate fmt 12,2 rule Round to 2 dec
+UI-09 Disc over 120 Block, “0–100 only.”
+UI-10 Disc ok 0..100 Accept
+UI-11 Desc max >500 chars Block, show limit
+UI-12 Picture type GIF/BMP Block, “Invalid file type.”
+UI-13 Picture size >5 MB Block, “Invalid file size.”
+UI-14 Preview Valid upload Show thumb preview
+UI-15 Spinner Click Save Show loading till done
+UI-16 Concurrency msg 412 from API Show “Item updated by another user, please reload.”
+6.2 Load for Edit – /item/getlist?itemID=X
+ID Case Params Expect
+GL-01 Valid itemID owned 200, one row
+GL-02 Not found bad id 404
+GL-03 Other company id not owned 404
+GL-04 No token— 401
+6.3 Save Insert/Update – /item/insertupdate
+ID Case Body Expect
+IU-01 Insert ok itemID:0, valid 200 {itemID, updatedOn}
+IU-02 Update ok itemID>0, valid updatedOnPrev 200 {itemID, updatedOn}
+IU-03 Name dup Same name in company 409
+IU-4 Bad range saleRate<0 or discountPct>100 400
+IU-05 Long text name>50 or desc>500 400
+IU-06 Not found update id not owned 404
+IU-07 Concurrency stamp mismatch 412
+IU-08 Trim spaces in fields Saved trimmed
+IU-09 Money round 12,2 input Saved with 2 dec
+6.4 Picture Upload – /item/picture/upload
+ID Case Input Expect
+UP-01 Good file PNG/JPG ≤5MB 200 {url, thumbUrl}
+UP-02 Bad type GIF/BMP 415
+UP-03 Big file >5MB 415
+UP-04 No item bad itemID 404
+UP-05 Other company not owned 404
+UP-06 Paths— File at /company/{companyID}/Item/{itemID}/ItemPicture.png and thumb _thumb.png
+6.5 Picture Read – /item/picture, /item/pictureThumbnail
+ID Case Query Expect
+PR-01 Logo url itemID valid 200 {url}
+PR-02 Thumb url itemID valid 200 {url}
+PR-03 None no file yet 404
+PR-04 Other company not owned 404
+PR-05 No token— 401
+6.6 Grid Refresh (post save)
+ID Case Step Expect
+RF-01 Insert After 200 Close modal; call /item/getlist?itemID=newId; append row
+RF-02 Update After 200 Close modal; call /item/getlist?itemID=id; replace row
+RF-03 Concurrency 412 Keep modal open; show error; let user reload
+6.7 Security & Rules
+ID Case Action Expect
+SEC-01 Token only Try pass companyID in body Ignored; use token
+SEC-02 SQL inj Bad strings Validation/length errors
+SEC-03 UTC time Check updatedOn UTC format
+SEC-04 No hyphen Check routes Names match spec
+SEC-05 Types Validate JSON types 400 on mismatch
+6.8 A11y
+ID Case Check Expect
+AX-01 Labels Inputs labeled Screen reader ok
+AX-02 Tab order Navigate with Tab Logical order
+AX-03 Error ARIA Inline errors Announced
+
+Invoice Dashboard
+06 September 2025 03:57 PM
+1. Overview
+This page merges a mini dashboard and the invoice list. The top shows four cards: count of invoices,
+total amount, a line chart for the last 12 months (by month), and a top 5 items + Others chart by
+revenue. Use the company currency symbol and thousand sep rules.
+Below the cards is the invoice grid for work. Add quick filters like Today, Week, Month, Year, and
+Custom. Charts read only your company data from the token. The goal is quick insight first, then fast
+action on the list.
+2. Page UI/UX Requirements – Invoice List + Mini
+Dashboard
+Page Route: /invoices
+Layout
+• Header row
+○ Left: Title Invoices
+○ Right: Quick filters → Today, Week, Month, Year, Custom (date range)
+Mini dashboard (4 cards in one row, wrap on mobile)• 1. # Invoices
+Value: count in range
+Subtext: range name
+2. Total Amount
+Value: sum in range
+Show currency from company
+Use thousand sep
+3. Last 12 Months (line chart)
+X: month (MMM yyyy)
+
+Y: sum of invoice amount
+Tooltip: month, sum, count
+Fixed to last 12 months, not the grid range
+4. Top Items (pie)
+Top 5 items by sum
+
+Slice 6 = Others
+Tooltip: item name, sum, share %
+• Grid below cards
+Action Bar (above grid)
+Left: Search (by Invoice No, Name)• • Right: New Invoice, Export, Column Chooser
+Grid Columns
+Column Caption Type Rules
+InvoiceNo Invoice No Text / Num Bold, unique, editable on make only
+InvoiceDate Date Date Show dd-MMM-yyyy
+CustomerName Customer Text Max 50, trim
+ItemsCount Items Num Sum of lines
+SubTotal Sub Total Money Sep + 2 dec, show currency
+TaxPercentage Tax % Num 0–100, 2 dec
+TaxAmount Tax Amt Money Sep + 2 dec
+InvoiceAmount Total Money Highlight, sep + 2 dec
+Actions— Icons Edit, Print, Delete
+Buttons / Links
+New Invoice → open editor page• Edit → open editor for row• Print → open print view in new tab• Delete → confirm, then hard delete• Export → CSV or XLS of current grid view• Column Chooser → show/hide cols• Display & Style
+Use MUI forms and grid• • Cards use soft shadow and round corners
+Charts use clear axis and tooltips• All money uses currency symbol from company• • Use thousand sep and 2 dec
+Validation & UX
+• Search is fast and live
+Filters update cards and grid (cards 1,2,4 follow grid range; card 3 stays last 12 months)• Keep state in URL (range, page, sort)• On mobile, cards stack 2 per row; grid becomes cards per row• Show clear empty states for grid and charts• A11y
+Label inputs and buttons• • Good tab order
+
+3. Activity & Data Flow Diagram – Invoice List + Mini
+Dashboard
+Page Route: /invoices
+APIs used
+GET /invoice/getlist• GET /invoice/getmetrics (count, total)• GET /invoice/gettrend12m (last 12 months)• GET /invoice/topitems (top 5 + others)• All are JWT. Read companyID from token only.
+Flow (steps)
+1. Open page
+• UI sets range = This Month.
+• Fire calls in parallel:
+○ /invoice/getlist?from&to
+○ /invoice/getmetrics?from&to
+○ /invoice/gettrend12m (no range)
+○ /invoice/topitems?from&to
+• Show cards and grid when each call returns.
+Use currency and thousand sep for all money.• 2. • Change range (Today/Week/Month/Year/Custom)
+Re-call: getlist, getmetrics, topitems.
+• Do not re-call gettrend12m.
+Update cards 1,2,4 and the grid.• 3. • Search text
+Search box filters the grid on the client.
+Cards stay tied to date range, not text search.• 4. New invoice
+Click New Invoice → go to editor page.• • 5. After save, return to /invoices and refresh all four calls.
+Edit / Delete / Print
+Edit → open editor; on save, refresh getlist (and getmetrics if value changed).• • Delete → confirm; on ok, delete, then refresh getlist and getmetrics.
+Print → open print view; no data change.• 6. • Export
+Export current grid view to CSV/XLS on the client.
+Data Flow (table)
+Step Source Action API / Dest Result
+Load UI Set default range— Range in state
+Fetch list UI GET list for range /invoice/getlist Rows for grid
+Fetch metrics UI GET count + total /invoice/getmetrics Card 1,2 values
+Fetch trend UI GET last 12 months /invoice/gettrend12m Line chart data
+Fetch top items UI GET top 5 + others /invoice/topitems Pie chart data
+Change range UI Update state 3 GETs again Cards + grid refresh
+Search UI Client filter— Grid filters only
+
+Edit/Delete UI Save/Delete respective APIs Then refresh list (+ metrics)
+Errors & Empty states
+• 401 → send to /login.
+• No data → cards show zero; grid shows “No invoices found”.
+Server fail → small banner on top; keep last good data.• 4. Database table & Stored Procedures
+4.1 Tables
+Table: Invoice
+Field Name Data Type Rules / Notes
+InvoiceID int (PK, identity) Key
+InvoiceNo int Unique per Company; auto if null; user can edit
+InvoiceDate date Required
+CustomerName nvarchar(50) Required
+Address nvarchar(500) Nullable
+City nvarchar(50) Nullable
+SubTotal decimal(12,2) Saved on post
+TaxPercentage decimal(5,2) Default 0.00
+TaxAmount decimal(12,2) Saved on post
+InvoiceAmount decimal(12,2) Saved on post
+Notes nvarchar(500) Nullable
+CompanyID int FK → Company.CompanyID
+CreatedOn datetime2 Default SYSUTCDATETIME()
+CreatedBy int Nullable
+UpdatedOn datetime2 Set on each save (for lock)
+UpdatedBy int Nullable
+Indexes
+UX_Invoice_Company_InvoiceNo UNIQUE (CompanyID, InvoiceNo).• IX_Invoice_Company_Date (CompanyID, InvoiceDate DESC).• Money fields store final calc.
+No status field. No cust master.
+Table: InvoiceItem
+Field Name Data Type Rules / Notes
+InvoiceItemID int (PK, identity) Key
+InvoiceID int (FK → Invoice.InvoiceID) Required
+RowNo int 1..n
+ItemID int (FK → Item.ItemID) Nullable (free text line)
+Description nvarchar(500) Nullable
+Quantity decimal(12,2) ≥ 0
+Rate decimal(12,2) ≥ 0
+DiscountPct decimal(5,2) 0–100
+Amount decimal(12,2) Qty×Rate−(…%); saved on post
+Indexes
+IX_InvoiceItem_InvoiceID_RowNo (InvoiceID, RowNo).• Do not add CompanyID here (child of Invoice).
+User Defined Table Type: InvoiceItemTVP
+Field Type Notes
+RowNo int 1..n order
+ItemID int Nullable
+Description nvarchar(500) Nullable
+Quantity decimal(12,2) ≥ 0
+Rate decimal(12,2) ≥ 0
+DiscountPct decimal(5,2) 0–100
+4.2 Stored Procedures (spec only)
+Stored Procedure : InvoiceInsertUpdate
+Purpose
+Add or edit one invoice and its lines in one txn.
+Parameters
+Name Type Notes
+@CompanyID int From token
+@InvoiceID int OUTPUT 0/null = insert, >0 = update
+@InvoiceNo int Nullable on insert; if null, auto next
+@InvoiceDate date Required
+@CustomerName nvarchar(50) Required
+@Address nvarchar(500) Nullable
+@City nvarchar(50) Nullable
+@TaxPercentage decimal(5,2) Default 0
+@Notes nvarchar(500) Nullable
+@Lines InvoiceItemTVP READONLY Line set
+@UpdatedOnPrev datetime2 For update only; null on insert
+@SubTotal decimal(12,2) OUTPUT Calc by SP
+@TaxAmount decimal(12,2) OUTPUT Calc by SP
+@InvoiceAmount decimal(12,2) OUTPUT Calc by SP
+@UpdatedOn datetime2 OUTPUT New stamp
+Return Type
+No dataset. Only OUTPUT params.• Key Logic
+1. BEGIN TRAN; XACT_ABORT ON.
+2. If insert:
+○ If @InvoiceNo is null → set to (MAX(InvoiceNo)+1) for this Company with UPDLOCK,
+HOLDLOCK (or use a per-company SEQUENCE).
+3. If update:
+○ Check row belongs to @CompanyID.
+○ Lock check: UpdatedOn = @UpdatedOnPrev.
+4. Validate lines: at least one with Quantity > 0.
+5. Re-calc each line Amount and header SubTotal, TaxAmount, InvoiceAmount.
+6. Enforce (CompanyID, InvoiceNo) unique.
+7. Insert/update header and replace lines (simple delete+insert by InvoiceID).
+8. Set OUTPUTs and COMMIT.
+Optimization Suggestions
+• Use SEQUENCE per company for no-race invoice numbers.
+Keep money math at 2 dec; use DECIMAL(12,2) everywhere.• Use TVP + MERGE or batch insert for speed.• • Covering index on (CompanyID, InvoiceNo INCLUDE (InvoiceID)).
+Return only OUTPUTs; no row set.• Stored Procedure : InvoiceDelete
+Purpose
+Hard delete one invoice and its lines.
+Parameters
+Name Type
+@CompanyID int
+@InvoiceID int
+Return Type
+• No dataset.
+Key Rules
+• Check owner by @CompanyID.
+Delete items first, then header.• Optimization Suggestions
+FK with ON DELETE CASCADE if you prefer.• Stored Procedure : InvoiceGetList
+Purpose
+Get rows for the grid. No search/paging params.
+Allow one row fetch to refresh after save.
+Parameters
+Name Type Notes
+@CompanyID int Required
+@InvoiceID int Nullable; when set return that row
+@FromDate date Nullable
+@ToDate date Nullable (inclusive)
+Return Type
+• Result set.
+Result Columns
+Column Notes
+InvoiceID
+InvoiceNo
+InvoiceDate
+CustomerName
+SubTotal
+TaxPercentage
+TaxAmount
+InvoiceAmount
+UpdatedOn for lock
+Optimization Suggestions
+• Index seek by (CompanyID, InvoiceDate) and (CompanyID, InvoiceID).
+Stored Procedure : InvoiceGetMetrics
+Purpose
+For Card 1 & 2: count and total in range.
+Parameters
+Name Type
+@CompanyID int
+@FromDate date
+@ToDate date
+Return Type
+• Result set with one row: { InvoiceCount int, TotalAmount decimal(18,2) }.
+Optimization Suggestions
+• Use covered index on (CompanyID, InvoiceDate INCLUDE (InvoiceAmount)).
+Stored Procedure : InvoiceGetTrend12m
+Purpose
+For Card 3: last 12 months sum and count.
+Parameters
+Name Type Notes
+@CompanyID int
+@AsOf date Nullable; default today
+Return Type
+Rows: one per month (oldest→newest)• ○ MonthStart date, InvoiceCount int, AmountSum decimal(18,2)
+Optimization Suggestions
+Prebuild a months CTE for gaps.• Stored Procedure : InvoiceTopItems
+Purpose
+For Card 4: top N items by sum in range.
+Parameters
+Name Type Notes
+@CompanyID int
+@FromDate date
+@ToDate date
+@TopN int Default 5
+Return Type
+Rows: ItemID, ItemName, AmountSum (order by sum desc).• • API can fold the rest into “Others”.
+Optimization Suggestions
+Sum from InvoiceItem.Amount join Invoice (for date) and Item (for name).• • Filter ItemID IS NOT NULL; free-text lines can be grouped as Others in API.
+Notes
+○ ○ ○ ○ ○ All SPs take @CompanyID and must enforce it.
+All dates are UTC date values.
+No hyphens in names.
+UI does search and paging.
+Math and rounds on server; UI only shows values.
+5. API Endpoint Design – Invoice List + Mini
+Dashboard
+Page Route: /invoices
+All APIs use JWT. Read companyID from token only.
+1) Get invoice list
+• Method: GET
+Route: /invoice/getlist• Query: from (date, opt), to (date, opt), invoiceID (opt)• • Resp:
+[
+{
+"invoiceID": 101,
+"invoiceNo": 1201,
+"invoiceDate": "2025-09-01",
+"customerName": "John Doe",
+"subTotal": 12500.00,
+"taxPercentage": 5.00,
+"taxAmount": 625.00,
+"invoiceAmount": 13125.00,
+"updatedOn": "2025-09-07T06:10:12Z"
+}
+]
+• Errors: 401, 400 bad date, 404 if invoiceID not found.
+2) Get mini cards (count + total)
+• Method: GET
+Route: /invoice/getmetrics• Query: from (date), to (date)• • Resp:
+{ "invoiceCount": 42, "totalAmount": 354200.00 }
+• Errors: 401, 400.
+3) Get last 12 months trend (line)
+• Method: GET
+
+• Query: none (server uses today)• Resp:
+[
+{ "monthStart": "2024-10-01", "invoiceCount": 9, "amountSum": 68000.00 },
+{ "monthStart": "2024-11-01", "invoiceCount": 12, "amountSum": 84500.00 }
+]
+• Errors: 401. 4) Get top items (pie)
+• Method: GET
+Route: /invoice/topitems• Query: from (date), to (date), topN (int, opt, default 5)• • Resp:
+[
+{ "itemID": 7, "itemName": "Service A", "amountSum": 92000.00 },
+{ "itemID": 3, "itemName": "Product B", "amountSum": 71500.00 },
+{ "itemID": 11, "itemName": "Service C", "amountSum": 42000.00 },
+{ "itemID": 2, "itemName": "Addon X", "amountSum": 31000.00 },
+{ "itemID": 9, "itemName": "Audit Y", "amountSum": 22000.00 },
+{ "itemID": null, "itemName": "Others", "amountSum": 18000.00 }
+]
+• Errors: 401, 400.
+5) Delete invoice
+• Method: POST
+Route: /invoice/delete• • Body:
+{ "invoiceID": 101 }
+• Resp:
+{ "ok": true }
+• Errors: 401, 404 not found, 400 bad id.
+Rules
+Do not accept userID or companyID in any query/body.• • Dates are UTC YYYY-MM-DD.
+• Money is decimal(12,2).
+No hyphens in names.• 6. QA & Test Cases – Invoice List + Mini Dashboard
+6.1 UI & Cards
+ID Case Action Expect
+UI-01 Page load Open /invoices Title, filters, 4 cards, grid show
+UI-02 Card values Range = Month Card1 = count, Card2 = sum in range
+UI-03 Currency Any money Show company symbol
+UI-04 Thousand sep Large sum Show 12,345.67 style
+UI-05 Zero data No rows Cards show 0; grid “No invoices”
+UI-06 Mobile Small width Cards wrap; grid as cards
+6.2 Charts
+ID Case Action Expect
+CH-01 Trend fetch On load Line uses 12 months, not range
+CH-02 Trend labels Hover point Tooltip: month, sum, count
+CH-03 Top items Range = Month Pie shows top 5 + Others
+CH-04 Free lines Lines w/o ItemID Counted under Others
+CH-05 No items None in range Pie shows empty state
+CH-06 Change range Pick Week Pie updates; line stays same
+6.3 Grid
+ID Case Action Expect
+GR-01 Load rows On load Rows match range
+GR-02 Date view Check column dd-MMM-yyyy
+GR-03 Totals view Money cols Sep + 2 dec + symbol
+GR-04 Sort Click header Sort asc/desc
+GR-05 Search Type text Filter client-side
+GR-06 Pager Next page Moves to next set
+GR-07 Edit link Click edit Go to editor
+GR-08 Print link Click print Opens print view
+GR-09 Delete Confirm Row removed, cards refresh
+6.4 Filters & Search
+ID Case Action Expect
+FL-01 Today Click Today List/metrics/topitems refetch
+FL-02 Week Click Week Date range set to week
+FL-03 Month Click Month Range set to month
+FL-04 Year Click Year Range set to year
+FL-05 Custom Pick dates Applies to list/metrics/topitems
+FL-06 Text vs cards Search “abc” Cards unchanged (range only)
+6.5 APIs
+/invoice/getlist
+ID Case Params Expect
+GL-01 Range ok from,to 200 list
+GL-02 One row invoiceID 200 one row
+GL-03 Bad date from>to 400
+GL-04 No token— 401
+/invoice/getmetrics
+ID Case Params Expect
+GM-01 Range ok from,to 200 {invoiceCount,totalAmount}
+GM-02 No data from,to 200 {0,0.00}
+GM-03 No token— 401
+/invoice/gettrend12m
+ID Case Params Expect
+GT-01 Default none 200 12 rows, oldest→newest
+GT-02 No token— 401
+/invoice/topitems
+ID Case Params Expect
+TI-01 TopN=5 from,to,5 200 rows ≤6 (incl Others)
+TI-02 Only free lines from,to 200 one row “Others”
+TI-03 No token— 401
+/invoice/delete
+ID Case Body Expect
+DL-01 Good {invoiceID} 200 {ok:true}
+DL-02 Not found bad id 404
+DL-03 No token— 401
+/invoice/printview
+ID Case Query Expect
+PV-01 Good invoiceID 200 {html} or {url}
+PV-02 Not found bad id 404
+PV-03 No token— 401
+6.6 Number & Money rules
+ID Case Input Expect
+NM-01 Rounding 100.555 Show 100.56
+NM-02 Large sum 1234567.8 Show 1,234,567.80
+NM-03 Symbol Company “₹” Show ₹ on money fields
+NM-04 Tax % 5 Show 5.00
+6.7 Security
+ID Case Action Expect
+SC-01 Token-only IDs Pass companyID in req Ignored; use token
+SC-02 Auth miss Call any API sans token 401
+SC-03 No hyphen Check routes Match spec names
+SC-04 Verb rules GET vs POST As per spec
+6.8 Edge & Perf
+ID Case Action Expect
+ED-01 Huge data 10k rows UI paginates, stays smooth
+ED-02 Slow API Delay 2s Show spinners; no freeze
+ED-03 Delete then back Delete row Cards/list refresh clean
+ED-04 Time zone Dates Use UTC dates in API
+6.9 A11y
+ID Case Check Expect
+AX-01 Labels Filters, search Labeled
+AX-02 Tab order Navigate page Logical order
+AX-03 Charts ARIA Title/desc Screen reader ok
+AX-04 Color alone Charts Not color-only cues
+
+Invoice Editor
+07 September 2025 12:26 PM
+1. Overview – Invoice Editor
+The Invoice Editor lets users create or edit one invoice fast. It has header fields (invoice no, date,
+customer, address, city, tax %, notes) and a lines grid for items. Each line has item pick, text, qty,
+rate, discount %, and read-only amount. Totals auto update: Sub Total, Tax Amount, and Invoice
+Amount. Use the company currency and thousand sep rules.
+Invoice No is auto (next number) but editable before save. Taxes apply once per invoice, not per
+line. No customer master. The editor validates inputs, blocks bad data, and uses an UpdatedOn
+stamp for lock checks on update. On save, the server re-calcs all amounts and returns the new
+UpdatedOn. Route: /invoice/editor (page or modal).
+2. Page UI/UX Requirements – Invoice Editor
+Page Route: /invoice/editor
+Layout
+• Header
+○ Title: New Invoice or Edit Invoice
+○ Right: Save (primary), Cancel (link)
+Sections (top → bottom)• 1. Header fields
+2. Line items grid
+3. Totals panel (under the grid, per your rule)
+Header Fields
+Field Caption Control Rules Messages
+InvoiceNo Invoice No Number box Auto next. Editable before save. Unique per company. “Invoice no exists.”
+InvoiceDate* Invoice Date Date picker Required. Default today. “Pick a date.”
+CustomerName* Customer Text (50) Required. “Enter name.”
+Address Address Multiline (500) Optional.—
+City City Text (50) Optional.—
+Notes Notes Multiline (500) Optional.—
+Use one or two columns on desktop. One on mobile.
+Line Items Grid
+Col Caption Type Rules
+# S.No Auto 1..n
+Item* Item Dropdown On pick, prefill Desc, Rate, Disc.
+Description Description Text (500) Editable. Allow blank.
+Quantity* Qty Number (12,2) ≥ 0
+Rate* Rate Money (12,2) ≥ 0
+DiscountPct Disc % Number (5,2) 0–100
+Amount Amount Money (12,2) RO Calc = Qty×Rate−(Qty×Rate×Disc/100)
+Grid UX
+Add row, copy row, delete row.• • Live calc on edit.
+Show sum row at grid foot (hidden on mobile).• Need at least one row with Qty > 0 to save.• Totals Panel (under grid)
+• Sub Total: read-only box. Shows sum of line Amount.
+Tax Percentage: input box (5,2). Editable.• Tax Amount: input box (12,2). Editable.• Invoice Amount: big and highlighted. Read-only.• Live rules
+• Edit Tax % → set Tax Amt = round(SubTotal × Tax% / 100, 2).
+• Edit Tax Amt → set Tax % =
+○ if SubTotal > 0: round(TaxAmt × 100 / SubTotal, 2)
+○ if SubTotal = 0: set Tax % = 0 and show hint: “No tax on zero.”
+Invoice Amount = SubTotal + Tax Amount (read-only).• • Use company currency and thousand sep. Round to 2 dec.
+Validation
+• Tax % range 0–100.
+• Tax Amt ≥ 0.
+• Lock both to 2 dec.
+
+Buttons & States
+• Save: enabled when head + at least one valid line.
+Cancel: close and go back.• Spinner on save.• • Concurrency: if UpdatedOn mismatch → show “Invoice changed. Reload.”
+Design Notes
+• MUI look. Clear labels.
+Money fields right aligned.• Large Invoice Amount with bold font and soft highlight band.• Tooltips for math on Tax fields.• • Keyboard: Ctrl+Enter save, Alt+N add line, Del delete line.
+Error Text (short)
+• “Enter name.”
+• “Add at least one line.”
+• “Rate must be ≥ 0.”
+• “Disc must be 0–100.”
+• “Invoice no exists.”
+• “Invoice changed. Reload.”
+A11y
+• Labels and aria-help on tax boxes.• Read-only fields are focusable but not editable.• Good tab order: header → grid → totals → save.
+
+3. Activity & Data Flow Diagram – Invoice Editor
+Page Route: /invoice/editor
+APIs: /invoice/getlist, /invoice/insertupdate
+Rule update: Item selection is mandatory on every line. No free-text only lines.
+Flow (steps)
+1. Open editor
+New: open with blank header and one empty line.• • Edit: call GET /invoice/getlist?invoiceID to load header + lines.
+Prefill currency for money fields.• 2. Edit header
+Set Invoice No, Date, Customer, address, city, notes.• Date defaults to today.• 3. • Add lines
+Click Add row.
+Pick Item from dropdown (must pick).• ○ On pick: preload Description, Rate, Discount % from item.
+○ These stay editable.
+• Enter Qty.
+Row Amount auto = Qty × Rate − (Qty × Rate × Disc%/100).• 4. • Validate lines (client)
+Item is required for each line.
+• Qty ≥ 0, Rate ≥ 0, Disc 0–100.
+• At least one line with Qty > 0.
+Inline red text for any error.• 5. Totals panel
+Sub Total = sum of row Amount (read-only).• Enter Tax % or Tax Amount (both editable).• ○ Edit Tax % → compute Tax Amount.
+○ Edit Tax Amount → compute Tax % (if Sub Total > 0).
+Invoice Amount = Sub Total + Tax Amount (big, bold).• 6. • Save
+Click Save.
+• App sends POST /invoice/insertupdate with:
+○ Header fields.
+○ Lines TVP where each row has ItemID, Desc, Qty, Rate, Disc.
+○ updatedOnPrev (null on new).
+Disable button and show spinner.• 7. • Server (summary)
+Read companyID from token.
+• Trim and check fields.
+• Check Item required on every line.
+• Check items belong to same company.
+Need ≥1 valid line (Qty > 0).• • Lock check with updatedOnPrev.
+• Enforce unique (CompanyID, InvoiceNo).
+• Recalc all row Amount and header totals.
+• Save header and lines in one txn.
+• 8. Return { invoiceID, updatedOn }.
+After save
+Close editor or stay (as set).• • Refresh list page using GET /invoice/getlist?invoiceID.
+• Show toast “Saved”.
+Data Flow (table)
+Step Source Action Dest
+Load (edit) UI GET /invoice/getlist?invoiceID API → DB
+Add line UI Pick Item Client grid
+Calc UI Compute row amount, totals Client
+Save UI POST /invoice/insertupdate (header + lines TVP) API
+Validate API Check item, qty, rate, disc, lock DB
+Persist DB Upsert header + lines API
+Respond API {invoiceID, updatedOn} UI
+Refresh UI GET /invoice/getlist?invoiceID API
+Errors (short)
+“Pick an item.” (line)• • “Add at least one line with Qty > 0.”
+• “Rate must be ≥ 0.”
+• “Disc must be 0–100.”
+• “Invoice no exists.”
+• “Invoice changed. Reload.”
+4. Database Tables & Stored Procedure Suggestions
+Check Invoice List page
+5. API Endpoint Designs
+Check Invoice List page
+6. QA & Test Cases – Invoice Editor
+Page: /invoice/editor
+APIs:
+POST /invoice/insertupdate• GET /invoice/getlist (for one row load/refresh)• GET /item/getlookuplist (item pick)• 6.1 Header & Form
+ID Case Input / Action Expect
+HE-01 New default Open page Date = today; empty fields
+HE-02 Edit load invoiceID load Fields filled; lines shown
+HE-03 Invoice no edit Change number Allowed before save
+HE-04 Invoice no dup Save dup no 409 “Invoice no exists.”
+HE-05 Date miss Blank date Block; “Pick a date.”
+HE-06 Name miss Blank name Block; “Enter name.”
+HE-07 Notes len >500 chars 400; show limit
+6.2 Line Items (Item is required)
+ID Case Input / Action Expect
+LI-01 Add line Click add New row with empty cells
+LI-02 Item pick Select item Prefill Desc, Rate, Disc
+LI-03 Item miss Leave Item blank Block save; “Pick an item.”
+LI-04 Qty rule -1 Block; “Qty must be ≥ 0.”
+LI-05 Rate rule -1 Block; “Rate must be ≥ 0.”
+LI-06 Disc high 150 Block; “Disc 0–100.”
+LI-07 Amount calc Qty 2, Rate 100, Disc 10 Amount = 180.00
+LI-08 Need one row All Qty 0 Block; “Add one line with Qty > 0.”
+LI-09 Desc blank Keep empty Allowed
+6.3 Totals Panel & Tax Link
+ID Case Steps Expect
+TX-01 Sub Total Sum lines Read-only; sum of Amount
+TX-02 Tax% edit Set 5.25% TaxAmt = round(Sub×0.0525, 2)
+TX-03 TaxAmt edit Set 123.45 Tax% = round(123.45×100/Sub, 2)
+TX-04 Zero Sub Sub = 0; set TaxAmt Tax% becomes 0; hint “No tax on zero.”
+TX-05 Range Tax% -1 or 101 Block; “Tax % 0–100.”
+TX-06 Range TaxAmt -1 Block; “Tax amt must be ≥ 0.”
+TX-07 Invoice total Any change Total = Sub + TaxAmt (RO)
+TX-08 Format Large sums Symbol + sep + 2 dec
+6.4 Save API – POST /invoice/insertupdate
+ID Case Body Expect
+SV-01 Insert ok Valid header + one line 200 {invoiceID, updatedOn}
+SV-02 Update ok Valid + updatedOnPrev 200 with new updatedOn
+SV-03 Item required Line with no ItemID 400 “Pick an item.”
+SV-04 No valid line All Qty 0 400
+SV-05 Dup number Same InvoiceNo 409
+SV-06 Concurrency Stamp mismatch 412 “Invoice changed. Reload.”
+SV-07 Recalc server Send tweaked totals Server recalcs; returns true totals
+SV-08 Trim fields Spaces in text Saved trimmed
+SV-09 Large money Big values Saved to 2 dec; no overflow
+6.5 Load/Refresh – GET /invoice/getlist?invoiceID=…
+ID Case Input Expect
+LD-01 Load one Valid id 200 one row with header + sums
+LD-02 Not found Bad id 404
+LD-03 Other company Id not owned 404
+LD-04 No token— 401
+6.6 Number & Money Rules
+ID Case Input Expect
+NM-01 Rounding 100.555 Show 100.56
+NM-02 Sep 1234567.8 Show 1,234,567.80
+NM-03 Currency Company “₹” All money shows ₹
+NM-04 Tax% view 5 Show 5.00
+6.7 Security & Token
+ID Case Action Expect
+SC-01 Token only Try pass user/company ids Ignored; use token claims
+SC-02 No auth Call any API 401
+SC-03 Same company items Line ItemIDs Must belong to token company
+SC-04 No hyphen Check route names Match spec (no hyphens)
+6.8 UX & A11y
+ID Case Action Expect
+UX-01 Save key Ctrl+Enter Saves
+UX-02 Add key Alt+N Adds line
+UX-03 Del key Delete Removes line (confirm)
+UX-04 Big total Visual check Total bold, large, highlight
+AX-01 Labels All fields labeled Screen reader ok
+AX-02 Errors Inline errors ARIA announced
+AX-03 Tab order Header→Grid→Totals→Save Logical order
+6.9 Edge
+ID Case Action Expect
+ED-01 Many lines 200 lines Smooth scroll; calc stays fast
+ED-02 ED-03 Switch tax mode Change item Edit % then Amt Swap to new item Latest edit wins; values in sync
+Desc/Rate/Disc update; edits kept if user changed
+ED-04 Slow net Save waits Spinner; no double submit
