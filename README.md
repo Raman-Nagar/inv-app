@@ -32,7 +32,7 @@ Create a `.env.local` file in the root directory:
 
 ```env
 # API Configuration
-API_BASE_URL=http://localhost:3001
+API_BASE_URL=https://alitinvoiceappapi.azurewebsites.net
 ```
 
 Replace `http://localhost:3001` with your actual API server URL.
@@ -147,3 +147,4 @@ To complete the application, you may want to:
 ## Support
 
 For issues or questions, please check the project documentation or contact the development team.
+
